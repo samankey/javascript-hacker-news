@@ -5,36 +5,45 @@ const NEW_URL = 'https://api.hnpwa.com/v0/news/1.json';
 const CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
 
 const getData = (url) => {
-  console.log(url);
   ajax.open('GET', url, false);
   ajax.send();
   return JSON.parse(ajax.response);
 };
 
-const newsFeed = getData(NEW_URL);
-const ul = document.createElement('ul');
+const getNewsFeed = () => {
+  const newsFeed = getData(NEW_URL);
+  const newsList = [];
+  newsList.push('<ul>');
+  for (let i = 0; i < 10; i++) {
+    newsList.push(`
+      <li>
+        <a href="#${newsFeed[i].id}">
+          ${newsFeed[i].title} (${newsFeed[i].comments_count})
+        </a>
+      </li>
+    `);
+  }
+  newsList.push('</ul>');
+  container.innerHTML = newsList.join('');
+};
 
-window.addEventListener('hashchange', function () {
-  const id = this.location.hash.substring(1);
+const newsDetail = () => {
+  const id = location.hash.substring(1);
   const newsContent = getData(CONTENT_URL.replace('@id', id));
-  const title = document.createElement('h1');
-
-  title.innerHTML = newsContent.title;
-  content.appendChild(title);
-});
-
-for (let i = 0; i < 10; i++) {
-  const div = document.createElement('div');
-  div.innerHTML = `
-  <li>
-    <a href="#${newsFeed[i].id}">
-      ${newsFeed[i].title} (${newsFeed[i].comments_count})
-    </a>
-  <li>
+  container.innerHTML = `
+    <h1>${newsContent.title}</h1>
+    <div>
+      <a href="#">목록으로</a>
+    </div>
   `;
+};
+const router = () => {
+  console.log('ahr');
+  const routerPath = location.hash;
+  if (routerPath === '') getNewsFeed();
+  else newsDetail();
+};
 
-  ul.appendChild(div.firstElementChild);
-}
+window.addEventListener('hashchange', router);
 
-container.appendChild(ul);
-container.appendChild(content);
+router();

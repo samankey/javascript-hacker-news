@@ -124,27 +124,32 @@ var content = document.createElement('div');
 var NEW_URL = 'https://api.hnpwa.com/v0/news/1.json';
 var CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
 var getData = function getData(url) {
-  console.log(url);
   ajax.open('GET', url, false);
   ajax.send();
   return JSON.parse(ajax.response);
 };
-var newsFeed = getData(NEW_URL);
-var ul = document.createElement('ul');
-window.addEventListener('hashchange', function () {
-  var id = this.location.hash.substring(1);
+var getNewsFeed = function getNewsFeed() {
+  var newsFeed = getData(NEW_URL);
+  var newsList = [];
+  newsList.push('<ul>');
+  for (var i = 0; i < 10; i++) {
+    newsList.push("\n      <li>\n        <a href=\"#".concat(newsFeed[i].id, "\">\n          ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n        </a>\n      </li>\n    "));
+  }
+  newsList.push('</ul>');
+  container.innerHTML = newsList.join('');
+};
+var newsDetail = function newsDetail() {
+  var id = location.hash.substring(1);
   var newsContent = getData(CONTENT_URL.replace('@id', id));
-  var title = document.createElement('h1');
-  title.innerHTML = newsContent.title;
-  content.appendChild(title);
-});
-for (var i = 0; i < 10; i++) {
-  var div = document.createElement('div');
-  div.innerHTML = "\n  <li>\n    <a href=\"#".concat(newsFeed[i].id, "\">\n      ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n    </a>\n  <li>\n  ");
-  ul.appendChild(div.firstElementChild);
-}
-container.appendChild(ul);
-container.appendChild(content);
+  container.innerHTML = "\n    <h1>".concat(newsContent.title, "</h1>\n    <div>\n      <a href=\"#\">\uBAA9\uB85D\uC73C\uB85C</a>\n    </div>\n  ");
+};
+var router = function router() {
+  console.log('ahr');
+  var routerPath = location.hash;
+  if (routerPath === '') getNewsFeed();else newsDetail();
+};
+window.addEventListener('hashchange', router);
+router();
 },{}],"../../../../.nvm/versions/node/v14.19.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';

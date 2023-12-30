@@ -144,7 +144,6 @@ var newsDetail = function newsDetail() {
   container.innerHTML = "\n    <h1>".concat(newsContent.title, "</h1>\n    <div>\n      <a href=\"#\">\uBAA9\uB85D\uC73C\uB85C</a>\n    </div>\n  ");
 };
 var router = function router() {
-  console.log('ahr');
   var routerPath = location.hash;
   if (routerPath === '') getNewsFeed();else newsDetail();
 };

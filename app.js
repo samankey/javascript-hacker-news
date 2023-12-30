@@ -38,7 +38,6 @@ const newsDetail = () => {
   `;
 };
 const router = () => {
-  console.log('ahr');
   const routerPath = location.hash;
   if (routerPath === '') getNewsFeed();
   else newsDetail();

@@ -118,18 +118,33 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"app.js":[function(require,module,exports) {
+var container = document.getElementById('root');
 var ajax = new XMLHttpRequest();
+var content = document.createElement('div');
 var NEW_URL = 'https://api.hnpwa.com/v0/news/1.json';
-ajax.open('GET', NEW_URL, false);
-ajax.send();
-var newsFeed = JSON.parse(ajax.response);
+var CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
+var getData = function getData(url) {
+  console.log(url);
+  ajax.open('GET', url, false);
+  ajax.send();
+  return JSON.parse(ajax.response);
+};
+var newsFeed = getData(NEW_URL);
 var ul = document.createElement('ul');
+window.addEventListener('hashchange', function () {
+  var id = this.location.hash.substring(1);
+  var newsContent = getData(CONTENT_URL.replace('@id', id));
+  var title = document.createElement('h1');
+  title.innerHTML = newsContent.title;
+  content.appendChild(title);
+});
 for (var i = 0; i < 10; i++) {
-  var li = document.createElement('li');
-  li.innerHTML = newsFeed[i].title;
-  ul.appendChild(li);
+  var div = document.createElement('div');
+  div.innerHTML = "\n  <li>\n    <a href=\"#".concat(newsFeed[i].id, "\">\n      ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n    </a>\n  <li>\n  ");
+  ul.appendChild(div.firstElementChild);
 }
-document.getElementById('root').appendChild(ul);
+container.appendChild(ul);
+container.appendChild(content);
 },{}],"../../../../.nvm/versions/node/v14.19.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';

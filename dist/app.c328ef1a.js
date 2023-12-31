@@ -133,21 +133,35 @@ var getData = function getData(url) {
 var getNewsFeed = function getNewsFeed() {
   var limit = 10;
   var newsFeed = getData(NEW_URL);
-  var newsList = [];
   var maxPageNum = newsFeed.length / limit;
   var isMaxPage = maxPageNum === store.currentPage;
-  newsList.push('<ul>');
+  var template = "\n    <div class=\"bg-gray-600 min-h-screen\">\n      <div class=\"bg-white text-xl\">\n        <div class=\"mx-auto px-4\">\n          <div class=\"flex justify-between items-center py-6\">\n            <div class=\"flex justify-start\">\n              <h1 class=\"font-extrabold\">Hacker News</h1>\n            </div>\n            <div class=\"items-center justify-end\">\n              <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n                Previous\n              </a>\n              <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n                Next\n              </a>\n            </div>\n          </div> \n        </div>\n      </div>\n      <div class=\"p-4 text-2xl text-gray-700\">\n        {{__news_feed__}}        \n      </div>\n    </div>\n  ";
+  var newsList = [];
   for (var i = (store.currentPage - 1) * limit; i < store.currentPage * limit; i++) {
     newsList.push("\n      <li>\n        <a href=\"#/show/".concat(newsFeed[i].id, "\">\n          ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n        </a>\n      </li>\n    "));
   }
-  newsList.push('</ul>');
-  newsList.push("\n    <div>\n      <a href=\"#/page/".concat(store.currentPage > 1 ? store.currentPage - 1 : 1, "\">\uC774\uC804</a>\n      <a href=\"#/page/").concat(isMaxPage ? store.currentPage : store.currentPage + 1, "\">\uB2E4\uC74C</a>\n    </div>\n  "));
-  container.innerHTML = newsList.join('');
+  template = template.replace('{{__news_feed__}}', newsList.join(''));
+  template = template.replace('{{__prev_page__}}', "".concat(store.currentPage > 1 ? store.currentPage - 1 : 1));
+  template = template.replace('{{__next_page__}}', "".concat(isMaxPage ? store.currentPage : store.currentPage + 1));
+  container.innerHTML = template;
 };
 var newsDetail = function newsDetail() {
   var id = location.hash.substring(7);
   var newsContent = getData(CONTENT_URL.replace('@id', id));
-  container.innerHTML = "\n    <h1>".concat(newsContent.title, "</h1>\n    <div>\n      <a href=\"#/page/").concat(store.currentPage, "\">\uBAA9\uB85D\uC73C\uB85C</a>\n    </div>\n  ");
+  var template = "\n    <div class=\"bg-gray-600 min-h-screen pb-8\">\n      <div class=\"bg-white text-xl\">\n        <div class=\"mx-auto px-4\">\n          <div class=\"flex justify-between items-center py-6\">\n            <div class=\"flex justify-start\">\n              <h1 class=\"font-extrabold\">Hacker News</h1>\n            </div>\n            <div class=\"items-center justify-end\">\n              <a href=\"#/page/".concat(store.currentPage, "\" class=\"text-gray-500\">\n                <i class=\"fa fa-times\"></i>\n              </a>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"h-full border rounded-xl bg-white m-6 p-4 \">\n        <h2>").concat(newsContent.title, "</h2>\n        <div class=\"text-gray-400 h-20\">\n          ").concat(newsContent.content, "\n        </div>\n\n        {{__comments__}}\n\n      </div>\n    </div>\n  ");
+  function makeComment(comments) {
+    var called = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    var commentString = [];
+    for (var i = 0; i < comments.length; i++) {
+      commentString.push("\n        <div style=\"padding-left: ".concat(called * 40, "px;\" class=\"mt-4\">\n          <div class=\"text-gray-400\">\n            <i class=\"fa fa-sort-up mr-2\"></i>\n            <strong>").concat(comments[i].user, "</strong> ").concat(comments[i].time_ago, "\n          </div>\n          <p class=\"text-gray-700\">").concat(comments[i].content, "</p>\n        </div>  \n      "));
+      if (comments[i].comments.length > 0) {
+        commentString.push(makeComment(comments[i].comments, called + 1));
+        console.log('??', called);
+      }
+    }
+    return commentString.join('');
+  }
+  container.innerHTML = template.replace('{{__comments__}}', makeComment(newsContent.comments));
 };
 var router = function router() {
   var routerPath = location.hash;

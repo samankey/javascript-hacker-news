@@ -120,32 +120,41 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 })({"app.js":[function(require,module,exports) {
 var container = document.getElementById('root');
 var ajax = new XMLHttpRequest();
-var content = document.createElement('div');
 var NEW_URL = 'https://api.hnpwa.com/v0/news/1.json';
 var CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
+var store = {
+  currentPage: 1
+};
 var getData = function getData(url) {
   ajax.open('GET', url, false);
   ajax.send();
   return JSON.parse(ajax.response);
 };
 var getNewsFeed = function getNewsFeed() {
+  var limit = 10;
   var newsFeed = getData(NEW_URL);
   var newsList = [];
+  var maxPageNum = newsFeed.length / limit;
+  var isMaxPage = maxPageNum === store.currentPage;
   newsList.push('<ul>');
-  for (var i = 0; i < 10; i++) {
-    newsList.push("\n      <li>\n        <a href=\"#".concat(newsFeed[i].id, "\">\n          ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n        </a>\n      </li>\n    "));
+  for (var i = (store.currentPage - 1) * limit; i < store.currentPage * limit; i++) {
+    newsList.push("\n      <li>\n        <a href=\"#/show/".concat(newsFeed[i].id, "\">\n          ").concat(newsFeed[i].title, " (").concat(newsFeed[i].comments_count, ")\n        </a>\n      </li>\n    "));
   }
   newsList.push('</ul>');
+  newsList.push("\n    <div>\n      <a href=\"#/page/".concat(store.currentPage > 1 ? store.currentPage - 1 : 1, "\">\uC774\uC804</a>\n      <a href=\"#/page/").concat(isMaxPage ? store.currentPage : store.currentPage + 1, "\">\uB2E4\uC74C</a>\n    </div>\n  "));
   container.innerHTML = newsList.join('');
 };
 var newsDetail = function newsDetail() {
-  var id = location.hash.substring(1);
+  var id = location.hash.substring(7);
   var newsContent = getData(CONTENT_URL.replace('@id', id));
-  container.innerHTML = "\n    <h1>".concat(newsContent.title, "</h1>\n    <div>\n      <a href=\"#\">\uBAA9\uB85D\uC73C\uB85C</a>\n    </div>\n  ");
+  container.innerHTML = "\n    <h1>".concat(newsContent.title, "</h1>\n    <div>\n      <a href=\"#/page/").concat(store.currentPage, "\">\uBAA9\uB85D\uC73C\uB85C</a>\n    </div>\n  ");
 };
 var router = function router() {
   var routerPath = location.hash;
-  if (routerPath === '') getNewsFeed();else newsDetail();
+  if (routerPath === '') getNewsFeed();else if (routerPath.indexOf('#/page/') >= 0) {
+    store.currentPage = Number(routerPath.substring(7));
+    getNewsFeed();
+  } else newsDetail();
 };
 window.addEventListener('hashchange', router);
 router();
@@ -174,7 +183,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63553" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63761" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

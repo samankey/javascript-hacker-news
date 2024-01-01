@@ -174,22 +174,19 @@ var newsDetail = function newsDetail() {
       break;
     }
   }
-  function makeComment(comments, called) {
-    if (called === void 0) {
-      called = 0;
-    }
-    var commentString = [];
-    for (var i = 0; i < comments.length; i++) {
-      commentString.push("\n        <div style=\"padding-left: ".concat(called * 40, "px;\" class=\"mt-4\">\n          <div class=\"text-gray-400\">\n            <i class=\"fa fa-sort-up mr-2\"></i>\n            <strong>").concat(comments[i].user, "</strong> ").concat(comments[i].time_ago, "\n          </div>\n          <p class=\"text-gray-700\">").concat(comments[i].content, "</p>\n        </div>  \n      "));
-      if (comments[i].comments.length > 0) {
-        commentString.push(makeComment(comments[i].comments, called + 1));
-        console.log('??', called);
-      }
-    }
-    return commentString.join('');
-  }
   updateView(template.replace('{{__comments__}}', makeComment(newsContent.comments)));
 };
+function makeComment(comments) {
+  var commentString = [];
+  for (var i = 0; i < comments.length; i++) {
+    var comment = comments[i];
+    commentString.push("\n      <div style=\"padding-left: ".concat(comment.level * 40, "px;\" class=\"mt-4\">\n        <div class=\"text-gray-400\">\n          <i class=\"fa fa-sort-up mr-2\"></i>\n          <strong>").concat(comment.user, "</strong> ").concat(comment.time_ago, "\n        </div>\n        <p class=\"text-gray-700\">").concat(comment.content, "</p>\n      </div>  \n    "));
+    if (comment.comments.length > 0) {
+      commentString.push(makeComment(comment.comments));
+    }
+  }
+  return commentString.join('');
+}
 var router = function router() {
   var routerPath = location.hash;
   if (routerPath === '') getNewsFeed();else if (routerPath.indexOf('#/page/') >= 0) {

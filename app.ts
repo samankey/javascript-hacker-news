@@ -1,31 +1,32 @@
-type Store = {
+interface Store {
   currentPage: number;
   feeds: NewsFeed[];
-};
-type News = {
-  id: number;
-  time_ago: string;
-  title: string;
-  url: string;
-  user: string;
-  content: string;
-};
-type NewsFeed = News & {
-  comments_count: number;
-  domain: string;
-  points: number;
-  time: number;
-  type: string;
+}
+interface News {
+  readonly id: number;
+  readonly time_ago: string;
+  readonly title: string;
+  readonly url: string;
+  readonly user: string;
+  readonly content: string;
+}
+interface NewsFeed extends News {
+  readonly comments_count: number;
+  readonly domain: string;
+  readonly points: number;
+  readonly time: number;
+  readonly type: string;
   read?: boolean;
-};
-type NewsDetail = News & {
-  comments: NewsComment[];
-};
-type NewsComment = News & {
-  type: string;
-  comments: NewsComment[];
-  level: number;
-};
+}
+interface NewsDetail extends News {
+  readonly comments: NewsComment[];
+}
+interface NewsComment extends News {
+  readonly type: string;
+  readonly comments: NewsComment[];
+  readonly level: number;
+}
+
 const container: HTMLElement | null = document.getElementById('root');
 const ajax: XMLHttpRequest = new XMLHttpRequest();
 const NEW_URL = 'https://api.hnpwa.com/v0/news/1.json';

@@ -1,62 +1,62 @@
 import View from '../core/view';
 import { NewsFeedApi } from '../core/api';
-import { NewsFeed } from '../types';
+import { NewsStore } from '../types';
 import { NEWS_URL } from '../config';
+
 const template = `
-  <div class="bg-gray-600 min-h-screen">
-    <div class="bg-white text-xl">
-      <div class="mx-auto px-4">
-        <div class="flex justify-between items-center py-6">
-          <div class="flex justify-start">
-            <h1 class="font-extrabold">Hacker News</h1>
-          </div>
-          <div class="items-center justify-end">
-            <a href="#/page/{{__prev_page__}}" class="text-gray-500">
-              Previous
-            </a>
-            <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
-              Next
-            </a>
-          </div>
-        </div> 
-      </div>
-    </div>
-    <div class="p-4 text-2xl text-gray-700">
-      {{__news_feed__}}        
+<div class="bg-gray-600 min-h-screen">
+  <div class="bg-white text-xl">
+    <div class="mx-auto px-4">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex justify-start">
+          <h1 class="font-extrabold">Hacker News</h1>
+        </div>
+        <div class="items-center justify-end">
+          <a href="#/page/{{__prev_page__}}" class="text-gray-500">
+            Previous
+          </a>
+          <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
+            Next
+          </a>
+        </div>
+      </div> 
     </div>
   </div>
+  <div class="p-4 text-2xl text-gray-700">
+    {{__news_feed__}}        
+  </div>
+</div>
 `;
+
 export default class NewsFeedView extends View {
   private api: NewsFeedApi;
-  private feeds: NewsFeed[];
-  limit: number;
-  constructor(containerId: string) {
+  private store: NewsStore;
+
+  constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
 
+    this.store = store;
     this.api = new NewsFeedApi(NEWS_URL);
-    this.limit = 10;
-    this.feeds = window.store.feeds;
 
-    if (this.feeds.length === 0) {
-      this.feeds = window.store.feeds = this.api.getData();
-      this.makeFeeds();
+    if (!this.store.hasFeeds) {
+      this.store.setFeeds(this.api.getData());
     }
   }
 
-  render(): void {
-    window.store.currentPage = Number(location.hash.substring(7) || 1);
-    const maxPageNum = this.feeds.length / this.limit;
-    const isMaxPage = maxPageNum === window.store.currentPage;
+  render = (page: string = '1'): void => {
+    this.store.currentPage = Number(page);
+
     for (
-      let i = (window.store.currentPage - 1) * this.limit;
-      i < window.store.currentPage * this.limit;
+      let i = (this.store.currentPage - 1) * 10;
+      i < this.store.currentPage * 10;
       i++
     ) {
       const { id, title, comments_count, user, points, time_ago, read } =
-        this.feeds[i];
+        this.store.getFeed(i);
+
       this.addHtml(`
         <div class="p-6 ${
-          read ? 'bg-red-100' : 'bg-white'
+          read ? 'bg-red-500' : 'bg-white'
         } mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
           <div class="flex">
             <div class="flex-auto">
@@ -73,25 +73,14 @@ export default class NewsFeedView extends View {
               <div><i class="far fa-clock mr-1"></i>${time_ago}</div>
             </div>  
           </div>
-        </div> 
+        </div>    
       `);
     }
+
     this.setTemplateData('news_feed', this.getHtml());
-    this.setTemplateData(
-      'prev_page',
-      `${window.store.currentPage > 1 ? window.store.currentPage - 1 : 1}`
-    );
-    this.setTemplateData(
-      'next_page',
-      `${isMaxPage ? window.store.currentPage : window.store.currentPage + 1}`
-    );
+    this.setTemplateData('prev_page', String(this.store.prevPage));
+    this.setTemplateData('next_page', String(this.store.nextPage));
 
     this.updateView();
-  }
-
-  private makeFeeds(): void {
-    for (let i = 0; i < this.feeds.length; i++) {
-      this.feeds[i].read = false;
-    }
-  }
+  };
 }

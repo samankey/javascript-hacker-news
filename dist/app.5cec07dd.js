@@ -349,26 +349,25 @@ Object.defineProperty(exports, "__esModule", {
 var view_1 = __importDefault(require("../core/view"));
 var api_1 = require("../core/api");
 var config_1 = require("../config");
-var template = "\n  <div class=\"bg-gray-600 min-h-screen pb-8\">\n    <div class=\"bg-white text-xl\">\n      <div class=\"mx-auto px-4\">\n        <div class=\"flex justify-between items-center py-6\">\n          <div class=\"flex justify-start\">\n            <h1 class=\"font-extrabold\">Hacker News</h1>\n          </div>\n          <div class=\"items-center justify-end\">\n            <a href=\"#/page/{{__currentPage__}}\" class=\"text-gray-500\">\n              <i class=\"fa fa-times\"></i>\n            </a>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"h-full border rounded-xl bg-white m-6 p-4 \">\n      <h2>{{__title__}}</h2>\n      <div class=\"text-gray-400 h-20\">\n        {{__content__}}\n      </div>\n      {{__comments__}}\n    </div>\n  </div>\n";
+var template = "\n<div class=\"bg-gray-600 min-h-screen pb-8\">\n  <div class=\"bg-white text-xl\">\n    <div class=\"mx-auto px-4\">\n      <div class=\"flex justify-between items-center py-6\">\n        <div class=\"flex justify-start\">\n          <h1 class=\"font-extrabold\">Hacker News</h1>\n        </div>\n        <div class=\"items-center justify-end\">\n          <a href=\"#/page/{{__currentPage__}}\" class=\"text-gray-500\">\n            <i class=\"fa fa-times\"></i>\n          </a>\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <div class=\"h-full border rounded-xl bg-white m-6 p-4 \">\n    <h2>{{__title__}}</h2>\n    <div class=\"text-gray-400 h-20\">\n      {{__content__}}\n    </div>\n    {{__comments__}}\n  </div>\n</div>\n";
 var NewsDetailView = /** @class */function (_super) {
   __extends(NewsDetailView, _super);
-  function NewsDetailView(containerId) {
+  function NewsDetailView(containerId, store) {
     var _this = _super.call(this, containerId, template) || this;
     _this.render = function (id) {
       var api = new api_1.NewsDetailApi(config_1.CONTENT_URL.replace('@id', id));
-      for (var i = 0; i < window.store.feeds.length; i++) {
-        if (window.store.feeds[i].id === Number(id)) {
-          window.store.feeds[i].read = true;
-          break;
-        }
-      }
-      var newsDetail = api.getData();
-      _this.setTemplateData('currentPage', window.store.currentPage.toString());
-      _this.setTemplateData('title', newsDetail.title);
-      _this.setTemplateData('content', newsDetail.content);
-      _this.setTemplateData('comments', _this.makeComment(newsDetail.comments));
+      var _a = api.getData(),
+        title = _a.title,
+        content = _a.content,
+        comments = _a.comments;
+      _this.store.makeRead(Number(id));
+      _this.setTemplateData('currentPage', _this.store.currentPage.toString());
+      _this.setTemplateData('title', title);
+      _this.setTemplateData('content', content);
+      _this.setTemplateData('comments', _this.makeComment(comments));
       _this.updateView();
     };
+    _this.store = store;
     return _this;
   }
   NewsDetailView.prototype.makeComment = function (comments) {
@@ -418,45 +417,39 @@ Object.defineProperty(exports, "__esModule", {
 var view_1 = __importDefault(require("../core/view"));
 var api_1 = require("../core/api");
 var config_1 = require("../config");
-var template = "\n  <div class=\"bg-gray-600 min-h-screen\">\n    <div class=\"bg-white text-xl\">\n      <div class=\"mx-auto px-4\">\n        <div class=\"flex justify-between items-center py-6\">\n          <div class=\"flex justify-start\">\n            <h1 class=\"font-extrabold\">Hacker News</h1>\n          </div>\n          <div class=\"items-center justify-end\">\n            <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n              Previous\n            </a>\n            <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n              Next\n            </a>\n          </div>\n        </div> \n      </div>\n    </div>\n    <div class=\"p-4 text-2xl text-gray-700\">\n      {{__news_feed__}}        \n    </div>\n  </div>\n";
+var template = "\n<div class=\"bg-gray-600 min-h-screen\">\n  <div class=\"bg-white text-xl\">\n    <div class=\"mx-auto px-4\">\n      <div class=\"flex justify-between items-center py-6\">\n        <div class=\"flex justify-start\">\n          <h1 class=\"font-extrabold\">Hacker News</h1>\n        </div>\n        <div class=\"items-center justify-end\">\n          <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n            Previous\n          </a>\n          <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n            Next\n          </a>\n        </div>\n      </div> \n    </div>\n  </div>\n  <div class=\"p-4 text-2xl text-gray-700\">\n    {{__news_feed__}}        \n  </div>\n</div>\n";
 var NewsFeedView = /** @class */function (_super) {
   __extends(NewsFeedView, _super);
-  function NewsFeedView(containerId) {
+  function NewsFeedView(containerId, store) {
     var _this = _super.call(this, containerId, template) || this;
+    _this.render = function (page) {
+      if (page === void 0) {
+        page = '1';
+      }
+      _this.store.currentPage = Number(page);
+      for (var i = (_this.store.currentPage - 1) * 10; i < _this.store.currentPage * 10; i++) {
+        var _a = _this.store.getFeed(i),
+          id = _a.id,
+          title = _a.title,
+          comments_count = _a.comments_count,
+          user = _a.user,
+          points = _a.points,
+          time_ago = _a.time_ago,
+          read = _a.read;
+        _this.addHtml("\n        <div class=\"p-6 ".concat(read ? 'bg-red-500' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n          <div class=\"flex\">\n            <div class=\"flex-auto\">\n              <a href=\"#/show/").concat(id, "\">").concat(title, "</a>  \n            </div>\n            <div class=\"text-center text-sm\">\n              <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">").concat(comments_count, "</div>\n            </div>\n          </div>\n          <div class=\"flex mt-3\">\n            <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n              <div><i class=\"fas fa-user mr-1\"></i>").concat(user, "</div>\n              <div><i class=\"fas fa-heart mr-1\"></i>").concat(points, "</div>\n              <div><i class=\"far fa-clock mr-1\"></i>").concat(time_ago, "</div>\n            </div>  \n          </div>\n        </div>    \n      "));
+      }
+      _this.setTemplateData('news_feed', _this.getHtml());
+      _this.setTemplateData('prev_page', String(_this.store.prevPage));
+      _this.setTemplateData('next_page', String(_this.store.nextPage));
+      _this.updateView();
+    };
+    _this.store = store;
     _this.api = new api_1.NewsFeedApi(config_1.NEWS_URL);
-    _this.limit = 10;
-    _this.feeds = window.store.feeds;
-    if (_this.feeds.length === 0) {
-      _this.feeds = window.store.feeds = _this.api.getData();
-      _this.makeFeeds();
+    if (!_this.store.hasFeeds) {
+      _this.store.setFeeds(_this.api.getData());
     }
     return _this;
   }
-  NewsFeedView.prototype.render = function () {
-    window.store.currentPage = Number(location.hash.substring(7) || 1);
-    var maxPageNum = this.feeds.length / this.limit;
-    var isMaxPage = maxPageNum === window.store.currentPage;
-    for (var i = (window.store.currentPage - 1) * this.limit; i < window.store.currentPage * this.limit; i++) {
-      var _a = this.feeds[i],
-        id = _a.id,
-        title = _a.title,
-        comments_count = _a.comments_count,
-        user = _a.user,
-        points = _a.points,
-        time_ago = _a.time_ago,
-        read = _a.read;
-      this.addHtml("\n        <div class=\"p-6 ".concat(read ? 'bg-red-100' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n          <div class=\"flex\">\n            <div class=\"flex-auto\">\n              <a href=\"#/show/").concat(id, "\">").concat(title, "</a>  \n            </div>\n            <div class=\"text-center text-sm\">\n              <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">").concat(comments_count, "</div>\n            </div>\n          </div>\n          <div class=\"flex mt-3\">\n            <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n              <div><i class=\"fas fa-user mr-1\"></i>").concat(user, "</div>\n              <div><i class=\"fas fa-heart mr-1\"></i>").concat(points, "</div>\n              <div><i class=\"far fa-clock mr-1\"></i>").concat(time_ago, "</div>\n            </div>  \n          </div>\n        </div> \n      "));
-    }
-    this.setTemplateData('news_feed', this.getHtml());
-    this.setTemplateData('prev_page', "".concat(window.store.currentPage > 1 ? window.store.currentPage - 1 : 1));
-    this.setTemplateData('next_page', "".concat(isMaxPage ? window.store.currentPage : window.store.currentPage + 1));
-    this.updateView();
-  };
-  NewsFeedView.prototype.makeFeeds = function () {
-    for (var i = 0; i < this.feeds.length; i++) {
-      this.feeds[i].read = false;
-    }
-  };
   return NewsFeedView;
 }(view_1.default);
 exports.default = NewsFeedView;
@@ -486,7 +479,91 @@ Object.defineProperty(exports, "NewsFeedView", {
     return __importDefault(news_feed_view_1).default;
   }
 });
-},{"./news-detail-view":"src/page/news-detail-view.ts","./news-feed-view":"src/page/news-feed-view.ts"}],"src/app.ts":[function(require,module,exports) {
+},{"./news-detail-view":"src/page/news-detail-view.ts","./news-feed-view":"src/page/news-feed-view.ts"}],"src/store.ts":[function(require,module,exports) {
+"use strict";
+
+var __assign = this && this.__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+    }
+    return t;
+  };
+  return __assign.apply(this, arguments);
+};
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Store = void 0;
+var Store = /** @class */function () {
+  function Store() {
+    this.feeds = [];
+    this._currentPage = 1;
+  }
+  Object.defineProperty(Store.prototype, "currentPage", {
+    get: function get() {
+      return this._currentPage;
+    },
+    set: function set(page) {
+      this._currentPage = page;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Store.prototype, "nextPage", {
+    get: function get() {
+      return this._currentPage + 1;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Store.prototype, "prevPage", {
+    get: function get() {
+      return this._currentPage > 1 ? this._currentPage - 1 : 1;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Store.prototype, "numberOfFeed", {
+    get: function get() {
+      return this.feeds.length;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Store.prototype, "hasFeeds", {
+    get: function get() {
+      return this.feeds.length > 0;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Store.prototype.getFeed = function (position) {
+    return this.feeds[position];
+  };
+  Store.prototype.getAllFeeds = function () {
+    return this.feeds;
+  };
+  Store.prototype.setFeeds = function (feeds) {
+    this.feeds = feeds.map(function (feed) {
+      return __assign(__assign({}, feed), {
+        read: false
+      });
+    });
+  };
+  Store.prototype.makeRead = function (id) {
+    var feed = this.feeds.find(function (feed) {
+      return feed.id === id;
+    });
+    if (feed) {
+      feed.read = true;
+    }
+  };
+  return Store;
+}();
+exports.Store = Store;
+},{}],"src/app.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -499,19 +576,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 var router_1 = __importDefault(require("./core/router"));
 var page_1 = require("./page");
-var store = {
-  currentPage: 1,
-  feeds: []
-};
-window.store = store;
+var store_1 = require("./store");
+var store = new store_1.Store();
 var router = new router_1.default();
-var newsFeedView = new page_1.NewsFeedView('root');
-var newsDetailView = new page_1.NewsDetailView('root');
+var newsFeedView = new page_1.NewsFeedView('root', store);
+var newsDetailView = new page_1.NewsDetailView('root', store);
 router.setDefaultPage(newsFeedView);
 router.addRoutePath('/page/', newsFeedView, /page\/(\d+)/);
 router.addRoutePath('/show/', newsDetailView, /show\/(\d+)/);
-router.go();
-},{"./core/router":"src/core/router.ts","./page":"src/page/index.ts"}],"../../../../.nvm/versions/node/v14.19.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./core/router":"src/core/router.ts","./page":"src/page/index.ts","./store":"src/store.ts"}],"../../../../.nvm/versions/node/v14.19.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
